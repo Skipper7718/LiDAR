@@ -10,18 +10,19 @@ class LiDAR:
         self.port = port
         self.conn = serial.Serial(port, 115200)
         self.current_angle = 0
-        self.storage_boilerplate = {
+        self.storage_boilerplate = {        # column name for FSCAN (csv) file
             "x_angle": [],
             "y_angle": [],
             "measurement": []
         }
-        self.command = {
+        self.command = {                    # commands for the lidar sensor
             "scan": 1,
             "scan4x" : 2,
             "scale": 3,
             "park": 4
         }
     
+    # go along the edges of the area to be scanned, no measurement is read
     def go_scale(self, vfov:int, hfov:int, dfov:int) -> None:
         startx = 90 - vfov // 2
         stopx = 90 + vfov // 2
@@ -30,16 +31,19 @@ class LiDAR:
         signal = f"{self.command['scale']} {startx} {stopx} {starty} {stopy}\n"
         self.conn.write(bytes(signal, encoding="ascii"))
 
+    # park the sensor, program will exit because sensor is put into BOOTSEL mode
     def park(self) -> None:
         signal = f"{self.command['park']} 0 0 0 0\n"
         self.conn.write(bytes(signal, encoding="ascii"))
 
-
+    # run scan, either in 4-measurement average mode or in one measurement per angle mode
+    # vfov, hfov dfov are degree angles
     def scan(self, vfov:int, hfov:int, dfov:int, filename:str, quad:bool) -> None:
         # create new dict that will then be written to .fscan file
         storage = self.storage_boilerplate
         self.current_angle = 0
 
+        # limit possible angles as device will else collide with construction
         if( vfov < 0 or vfov > 180):
             raise Exception("LiDAR RANGE ERROR")
         if( hfov < 0 or hfov > 50 ):
@@ -54,10 +58,7 @@ class LiDAR:
         stopy = 90 + dfov
 
         # format signal to be readable for the lidar and send to sensor to start scan
-        if quad:
-            signal = f"{self.command['scan4x']} {startx} {stopx} {starty} {stopy}\n"
-        else:
-            signal = f"{self.command['scan']} {startx} {stopx} {starty} {stopy}\n"
+        signal = f"{self.command['scan4x' if quad else 'scan']} {startx} {stopx} {starty} {stopy}\n"
             
         self.conn.write(bytes(signal, encoding="ascii"))
 
@@ -73,11 +74,13 @@ class LiDAR:
                 storage["y_angle"].append(starty + y)
                 storage["measurement"].append(measurements // num_iter)
             self.current_angle += 1
-        
+
+        # write data in buffer to file        
         df = pd.DataFrame.from_dict(storage)
         df.to_csv(filename+".fscan", sep='\t', index=False)
         return True
 
+# visualize fscan file in 3d view
 def visualize(filename:str) -> bool:
     if( filename == None ):
         return False
@@ -91,7 +94,7 @@ def visualize(filename:str) -> bool:
     y_angles = (df["y_angle"].to_numpy().astype("d") - 90)*-1
     measurements = df["measurement"].to_numpy().astype("d")
 
-    # calculate x y z coordinates via trigonometry
+    # calculate x y z coordinates via trigonometry, the file only holds angles and measurement
     h1 = np.cos(np.deg2rad(y_angles)) * measurements
     z = (np.sin(np.deg2rad(y_angles)) * measurements)
     x = np.sin(np.deg2rad(x_angles)) * h1

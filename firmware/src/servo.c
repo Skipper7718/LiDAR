@@ -7,6 +7,7 @@
 #define DUTY_MIN 1600
 #define DUTY_MAX 7700
 
+// map one range to another
 long map(long x, long in_min, long in_max, long out_min, long out_max) {
   return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
@@ -21,12 +22,15 @@ void servo_put(int gpio, int angle, bool wait_write)
     pwm_set_chan_level(slice, channel, cc);
     pwm_set_enabled(slice, true);
 
+    // wait for servo to complete
     if(wait_write)
         sleep_ms(510);
     else
         sleep_ms(10);
 }
 
+
+// initialize PWM channel and set the correct clock rate
 void servo_init(int gpio, int base_frequency)
 {
     gpio_set_function(gpio, GPIO_FUNC_PWM);

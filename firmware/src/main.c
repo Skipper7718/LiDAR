@@ -8,7 +8,9 @@
 
 int main()
 {
+    // initialize PWM, I2C and Serial
     stdio_usb_init();
+    // wait one second, I don't know why but without this the code does not work :(
     sleep_ms(1000);
     printf("PROGRAM START\n");
     servo_init(18, 50);
@@ -24,11 +26,13 @@ int main()
     int command;
 
     for ( ;; ) {
+        // home to middle position
         servo_put(18, 90, true);
         servo_put(19, 90, true);
+        // read commend from serial
         scanf("%d %d %d %d %d", &command, &start_x, &stop_x, &start_y, &stop_y);
         switch( command ) {
-            // normal run mode
+            // normal run mode, run one measurement per angle
             case 1:
                 for(int y = start_y; y <= stop_y; y++ ) {
                     servo_put(19, y, false);
@@ -41,7 +45,7 @@ int main()
                 }
                 break;
 
-            // quad measurement run mode
+            // quad measurement run mode, run 4 measurements with small delays per angle
             case 2:
                 for(int y = start_y; y <= stop_y; y++ ) {
                     servo_put(19, y, false);
@@ -82,7 +86,6 @@ int main()
 
         }
     }
-    // printf("%d\n", stop_x - start_x);
 
     reset_usb_boot(0,0); // reset to BOOTSEL for another flash
 }
