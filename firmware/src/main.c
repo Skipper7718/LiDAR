@@ -43,11 +43,12 @@ int main()
     int command;
 
     float position = 90;
+    bool dir;
 
     stepper.step_delay_ms = 1;
-    stepper_angle(&stepper, &position, 0);
+    stepper_angle(&stepper, &position, 45);
     sleep_ms(500);
-    stepper_angle(&stepper, &position, 180);
+    stepper_angle(&stepper, &position, 135);
     sleep_ms(500);
     stepper_angle(&stepper, &position, 90);
     sleep_ms(100);
@@ -68,39 +69,41 @@ int main()
         switch( command ) {
             // normal run mode, run one measurement per angle
             case 1:
+                dir = true;
+                stepper_angle(&stepper, &position, start_x);
                 for(int y = start_y; y <= stop_y; y++ ) {
                     servo_put(19, y, false);
-                    sleep_ms(100);
-                    stepper_angle(&stepper, &position, start_x);
-                    sleep_ms(100);
                     for(float x = 0; x <= stop_x - start_x; x+=STEP ) {
-                        stepper_step(&stepper, 1, false);
-                        // sleep_ms(50);
+                        stepper_step(&stepper, 1, dir ? false : true);
+                        // sleep_ms(10);
                         printf("%d\n", lidar_get_measurement());
                     }
-                    position = start_x + (stop_x - start_x);
+                    dir = !dir;
+                    sleep_ms(30);
                 }
+                position = stop_x;
                 break;
 
             // quad measurement run mode, run 4 measurements with small delays per angle
             case 2:
+                dir = true;
+                stepper_angle(&stepper, &position, start_x);
                 for(int y = start_y; y <= stop_y; y++ ) {
                     servo_put(19, y, false);
-                    sleep_ms(100);
-                    stepper_angle(&stepper, &position, start_x);
-                    sleep_ms(100);
                     for(float x = 0; x <= stop_x - start_x; x+=STEP ) {
-                        stepper_step(&stepper, 1, false);
-                        // sleep_ms(50);
+                        stepper_step(&stepper, 1, dir ? false : true);
+                        // sleep_ms(10);
                         for(int i = 0; i < 4; i++) {
                             printf("%d\n", lidar_get_measurement());
-                            sleep_ms(2);
+                            sleep_ms(1);
                         }
                     }
-                    position = start_x + (stop_x - start_x);
+                    dir = !dir;
+                    sleep_ms(30);
                 }
+                position = stop_x;
                 break;
-            
+
             // go scale to see where the laser will approximately scan
             case 3:
                 servo_put(19, start_y, true);

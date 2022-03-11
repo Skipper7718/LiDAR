@@ -64,15 +64,22 @@ class LiDAR:
 
         # run scan and store values in buffer, then write to file
         num_iter = 4 if quad else 1
+        dir = True
         for y in range(stopy - starty + 1):
-            for x in range(int((stopx - startx) // scan_angle) + 1):
+            num_x_signals = int(vfov / scan_angle) + 1
+            for x in range(num_x_signals):
                 measurements = 0
                 for _ in range(num_iter):
                     measurement = self.conn.read_until()
                     measurements += int(measurement.decode().strip('\n'))
-                storage["x_angle"].append(startx + x)
+                if( dir ):
+                    storage["x_angle"].append(startx + scan_angle * x)
+                else:
+                    storage["x_angle"].append(startx + scan_angle * (num_x_signals - x))
+
                 storage["y_angle"].append(starty + y)
                 storage["measurement"].append(measurements // num_iter)
+            dir = not dir
             self.current_angle += 1
 
         # write data in buffer to file        
