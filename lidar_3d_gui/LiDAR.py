@@ -38,7 +38,7 @@ class LiDAR:
 
     # run scan, either in 4-measurement average mode or in one measurement per angle mode
     # vfov, hfov dfov are degree angles
-    def scan(self, vfov:int, hfov:int, dfov:int, filename:str, quad:bool) -> None:
+    def scan(self, scan_angle:float, vfov:int, hfov:int, dfov:int, filename:str, quad:bool) -> None:
         # create new dict that will then be written to .fscan file
         storage = self.storage_boilerplate
         self.current_angle = 0
@@ -65,7 +65,7 @@ class LiDAR:
         # run scan and store values in buffer, then write to file
         num_iter = 4 if quad else 1
         for y in range(stopy - starty + 1):
-            for x in range(stopx - startx + 1):
+            for x in range(int((stopx - startx) // scan_angle) + 1):
                 measurements = 0
                 for _ in range(num_iter):
                     measurement = self.conn.read_until()
