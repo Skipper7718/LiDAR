@@ -8,7 +8,7 @@ from plotly import graph_objects as go
 class LiDAR:
     def __init__(self, port:str) -> None:
         self.port = port
-        self.conn = serial.Serial(port, 115200)
+        self.conn = serial.Serial(port, 115200, timeout=5)
         self.current_angle = 0
         self.storage_boilerplate = {        # column name for FSCAN (csv) file
             "x_angle": [],
@@ -65,13 +65,18 @@ class LiDAR:
         # run scan and store values in buffer, then write to file
         num_iter = 4 if quad else 1
         dir = True
-        for y in range(stopy - starty + 1):
-            num_x_signals = int(vfov / scan_angle) + 1
+        for y in range(stopy - starty):
+            num_x_signals = int(vfov / scan_angle)
             for x in range(num_x_signals):
                 measurements = 0
                 for _ in range(num_iter):
                     measurement = self.conn.read_until()
-                    measurements += int(measurement.decode().strip('\n'))
+                    try:
+                        measurements += int(measurement.decode().strip('\n'))
+                    except ValueError:
+                        print("TOMEOUT!!!!")
+                        continue
+                    print(f"Y: {y} X: {x} MEAS: {measurements}")
                 if( dir ):
                     storage["x_angle"].append(startx + scan_angle * x)
                 else:
@@ -85,6 +90,7 @@ class LiDAR:
         # write data in buffer to file        
         df = pd.DataFrame.from_dict(storage)
         df.to_csv(filename+".fscan", sep='\t', index=False)
+        self.current_angle = 0
         return True
 
 # visualize fscan file in 3d view
@@ -95,6 +101,12 @@ def visualize(filename:str) -> bool:
         return False
     
     df = pd.read_csv(filename, sep='\t')
+
+    # filter out possibly wrong measurements
+    max_thresh = 1000
+    for idx, row in df.iterrows():
+        if( row["measurement"] > max_thresh ):
+            df = df.drop(idx)
 
     # retrieve and remap angles in order to be able to parse them into x y z coords
     x_angles = (df["x_angle"].to_numpy().astype("d") - 90)
@@ -108,7 +120,11 @@ def visualize(filename:str) -> bool:
     y = np.cos(np.deg2rad(x_angles)) * h1
 
     # do some magic and display plot
-    rPlot = go.Scatter3d(x=x, y=y, z=z, mode="markers", marker=dict(size=2))
+
+    rPlot = go.Scatter3d(x=x, y=y, z=z, mode="markers", marker=dict(size=2, color=z, colorscale='rainbow'))
+    fig = go.Figure(data=[rPlot], layout=go.Layout(scene=dict(aspectmode="data")))
+    fig.show()
+    rPlot = go.Scatter3d(x=x, y=y, z=z, mode="markers", marker=dict(size=2.6, color='DarkSlateGrey', symbol="square"))
     fig = go.Figure(data=[rPlot], layout=go.Layout(scene=dict(aspectmode="data")))
     fig.show()
     return True

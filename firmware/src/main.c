@@ -8,7 +8,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define STEP 0.45 // 1.8° stepper, 1/4 microstepping
+#define STEP 0.225 // 1.8° stepper, 1/8 microstepping
 
 void stepper_angle( stepper_t *config, float *position, float new_position) {
     float diff = new_position - *position;
@@ -30,7 +30,8 @@ int main()
     stepper_t stepper = stepper_configure( 15, 14 );
     stepper.step_delay_ms = 5;
     stepper_init( &stepper );
-
+    gpio_init(25);
+    gpio_set_dir(25, GPIO_OUT);
     // stepper_step(&stepper, 30, true);
     // stepper_step(&stepper, 60, false);
     // stepper_step(&stepper, 30, true);
@@ -64,8 +65,10 @@ int main()
         stepper_angle(&stepper, &position, 90);
         servo_put(19, 90, true);
         // read commend from serial
+	gpio_put(25, true);
         scanf("%d %d %d %d %d", &command, &start_x, &stop_x, &start_y, &stop_y);
-
+	gpio_put(25, false);
+	sleep_ms(1000);
         switch( command ) {
             // normal run mode, run one measurement per angle
             case 1:
@@ -75,11 +78,12 @@ int main()
                     servo_put(19, y, false);
                     for(float x = 0; x <= stop_x - start_x; x+=STEP ) {
                         stepper_step(&stepper, 1, dir ? false : true);
-                        // sleep_ms(10);
+                        // sleep_ms(3);
                         printf("%d\n", lidar_get_measurement());
+                        fflush(stdout);
                     }
                     dir = !dir;
-                    sleep_ms(30);
+                    sleep_ms(20);
                 }
                 position = stop_x;
                 break;
@@ -95,6 +99,7 @@ int main()
                         // sleep_ms(10);
                         for(int i = 0; i < 4; i++) {
                             printf("%d\n", lidar_get_measurement());
+                            fflush(stdout);
                             sleep_ms(1);
                         }
                     }
