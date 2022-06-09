@@ -8,12 +8,12 @@ The project includes firmware + software (GUI) and build instructions.
 
 **DEMOS** (3D Web View):
 
-* [room.fscan](https://voidlight7718.github.io/lidar_demos/1.html)
-* [room2.fscan](https://voidlight7718.github.io/lidar_demos/6.html)
-* [room_with_mirror_and_door.fscan](https://voidlight7718.github.io/lidar_demos/2.html)
-* [humans_fast_scan.fscan](https://voidlight7718.github.io/lidar_demos/3.html)
-* [room_quad_mode.fscan](https://voidlight7718.github.io/lidar_demos/4.html)
-* [stairs_and_hall.fscan](https://voidlight7718.github.io/lidar_demos/5.html)
+* [room.fscan](https://skipper7718.github.io/lidar_demos/1.html)
+* [room2.fscan](https://skipper7718.github.io/lidar_demos/6.html)
+* [room_with_mirror_and_door.fscan](https://skipper7718.github.io/lidar_demos/2.html)
+* [humans_fast_scan.fscan](https://skipper7718.github.io/lidar_demos/3.html)
+* [room_quad_mode.fscan](https://skipper7718.github.io/lidar_demos/4.html)
+* [stairs_and_hall.fscan](https://skipper7718.github.io/lidar_demos/5.html)
 
 ---
 
