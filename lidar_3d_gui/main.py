@@ -21,6 +21,8 @@ class Ui(QtWidgets.QMainWindow):
 		self.fov =			self.findChild(QtWidgets.QSpinBox, 'fov')
 		self.fov_high =			self.findChild(QtWidgets.QSpinBox, 'fov_high')
 		self.fov_low =			self.findChild(QtWidgets.QSpinBox, 'fov_low')
+		self.microstep_div =	self.findChild(QtWidgets.QSpinBox, 'microstep_div')
+		self.stepper_angle =		self.findChild(QtWidgets.QDoubleSpinBox, 'stepper_angle')
 		# Progress Bars
 		self.scan_progress =		self.findChild(QtWidgets.QProgressBar, 'scan_progress')
 		# Buttons
@@ -124,14 +126,14 @@ class Ui(QtWidgets.QMainWindow):
 			mode = False
 
 		def scan_thread():
-			self.lidar.scan(fov, hfov, dfov, file_location, mode)
+			self.lidar.scan(float(self.stepper_angle.value()) / float(self.microstep_div.value()), fov, hfov, dfov, file_location, mode)
 
 		if( file_location != None ):
 			scan_thread = Thread(target=scan_thread)
 			self.scan_progress.setMaximum(hfov+dfov)
 			scan_thread.start()
 			while( scan_thread.is_alive() ):
-				self.scan_progress.setValue(self.lidar.current_angle)
+				self.scan_progress.setValue(round(self.lidar.current_angle))
 				sleep(0.2)
 			self.message("DONE SCAN")
 		else:
